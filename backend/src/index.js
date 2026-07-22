@@ -11,6 +11,7 @@ const goalRouter = require('./routes/goalRoutes');
 const adminRouter = require('./routes/adminRoutes');
 
 const app = express();
+app.set("trust proxy", 1);
 
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
