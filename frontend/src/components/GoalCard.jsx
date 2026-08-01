@@ -15,12 +15,11 @@ export default function GoalCard({ goal, onComplete, onAlmost }) {
     const [endTime, setEndTime] = useState(goal.endTime || '');
     const [progressInput, setProgressInput] = useState(goal.progress);
 
-     const [progressInput, setProgressInput] = useState(goal.progress);
 
     useEffect(() => {
         setProgressInput(goal.progress);
     }, [goal.progress]);
-    
+
     const locked = goal.submitted;
     const completed = goal.progress === 100;
     const timeRange = formatTimeRange(goal.startTime, goal.endTime);
