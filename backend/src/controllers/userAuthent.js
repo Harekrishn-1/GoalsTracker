@@ -9,7 +9,7 @@ const cookieOptions = {
     httpOnly: true,                                  // JS se cookie padhi na ja sake (XSS protection)
     secure: process.env.NODE_ENV === 'production',   // production mein sirf HTTPS
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 60 * 60 * 1000                           // 1 ghanta
+    maxAge: 30*24*60 * 60 * 1000                           // 1 ghanta
 };
 
 const register = async (req, res) => {
@@ -34,7 +34,7 @@ const register = async (req, res) => {
         const token = jwt.sign(
             { _id: user._id, emailId: user.emailId, role: 'user' },
             process.env.JWT_KEY,
-            { expiresIn: 60 * 60 }
+            { expiresIn:30*24* 60 * 60 }
         );
 
         res.cookie('token', token, cookieOptions);
@@ -76,7 +76,7 @@ const login = async (req, res) => {
         const token = jwt.sign(
             { _id: user._id, emailId: user.emailId, role: user.role },
             process.env.JWT_KEY,
-            { expiresIn: 60 * 60 }
+            { expiresIn: 30*24*60 * 60 }
         );
 
         res.cookie("token", token, {
