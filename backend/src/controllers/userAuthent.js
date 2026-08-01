@@ -84,7 +84,7 @@ const login = async (req, res) => {
     secure: true,
     sameSite: "none",
     path: "/",
-    maxAge: 60 * 60 * 1000,
+    maxAge: 30*24*60 * 60 * 1000,
 });
 
         res.status(200).json({
