@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Trophy, Lock, Check, Sparkles } from 'lucide-react';
 import { editGoal, removeGoal } from '../slices/goalSlice';
@@ -13,19 +13,32 @@ export default function GoalCard({ goal, onComplete, onAlmost }) {
     const [category, setCategory] = useState(goal.category);
     const [startTime, setStartTime] = useState(goal.startTime || '');
     const [endTime, setEndTime] = useState(goal.endTime || '');
+    const [progressInput, setProgressInput] = useState(goal.progress);
 
+     const [progressInput, setProgressInput] = useState(goal.progress);
+
+    useEffect(() => {
+        setProgressInput(goal.progress);
+    }, [goal.progress]);
+    
     const locked = goal.submitted;
     const completed = goal.progress === 100;
     const timeRange = formatTimeRange(goal.startTime, goal.endTime);
 
-    const updateProgress = (value) => {
-        const progress = Math.min(100, Math.max(0, Number(value) || 0));
+    const commitProgress = (value) => {
+        let progress = Number(value);
+        if (value === '' || Number.isNaN(progress)) {
+            setProgressInput(goal.progress);   // galat input pe wapas purana
+            return;
+        }
+        progress = Math.min(100, Math.max(0, progress));
+        setProgressInput(progress);
+
         const prev = goal.progress;
         dispatch(editGoal({ id: goal._id, updates: { progress } }));
         if (progress === 100 && prev !== 100) onComplete?.(goal.title);
         else if (progress >= 80 && progress < 100 && prev < 80) onAlmost?.();
     };
-
     const saveEdit = () => {
         const clean = title.trim();
         if (!clean) return;
@@ -147,21 +160,21 @@ export default function GoalCard({ goal, onComplete, onAlmost }) {
                                 type="number"
                                 min="0"
                                 max="100"
-                                value={goal.progress}
-                                onChange={(e) => updateProgress(e.target.value)}
+                                value={progressInput}
+                                onChange={(e) => setProgressInput(e.target.value)}
+                                onBlur={() => commitProgress(progressInput)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
                                 disabled={locked}
-                                className={`w-16 px-2 py-1 border border-gray-300 rounded text-center ${
-                                    locked ? 'bg-gray-100 cursor-not-allowed' : ''
-                                }`}
+                                className={`w-16 px-2 py-1 border border-gray-300 rounded text-center ${locked ? 'bg-gray-100 cursor-not-allowed' : ''
+                                    }`}
                             />
                             <span>%</span>
 
                             <div className="flex-1 max-w-xs">
                                 <div className="w-full h-2 bg-gray-200 rounded-full">
                                     <div
-                                        className={`h-2 rounded-full transition-all duration-500 ${
-                                            completed ? 'bg-gradient-to-r from-green-400 to-green-600' : 'bg-blue-500'
-                                        }`}
+                                        className={`h-2 rounded-full transition-all duration-500 ${completed ? 'bg-gradient-to-r from-green-400 to-green-600' : 'bg-blue-500'
+                                            }`}
                                         style={{ width: `${goal.progress}%` }}
                                     />
                                 </div>
@@ -190,11 +203,10 @@ export default function GoalCard({ goal, onComplete, onAlmost }) {
                     <button
                         onClick={() => dispatch(removeGoal(goal._id))}
                         disabled={locked}
-                        className={`px-4 py-2 rounded-lg transition-colors ${
-                            locked
-                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
-                        }`}
+                        className={`px-4 py-2 rounded-lg transition-colors ${locked
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
+                            }`}
                     >
                         Delete
                     </button>
