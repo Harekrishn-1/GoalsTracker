@@ -2,7 +2,7 @@
 
 A clean, full-stack app for tracking daily goals. Use it without an account; sign up only when you want your progress saved.
 
-**Live demo:** _add your deployed link here_
+**Live demo:** https://goalstracker.harekrishn.me/
 
 ---
 
