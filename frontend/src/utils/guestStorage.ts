@@ -1,9 +1,14 @@
+import { Goal, GoalCategory } from '../types';
+
 // Guest ka saara data yahan rehta hai. Login ke baad ye backend pe migrate
 // ho jaata hai aur localStorage clear kar dete hain.
 
 const GOALS_KEY = 'streakly_guest_goals';
 
-const read = (key) => {
+const isBrowser = typeof window !== 'undefined';
+
+const read = (key: string): Goal[] => {
+    if (!isBrowser) return [];
     try {
         const raw = localStorage.getItem(key);
         return raw ? JSON.parse(raw) : [];
@@ -12,11 +17,12 @@ const read = (key) => {
     }
 };
 
-const write = (key, value) => {
+const write = (key: string, value: Goal[]): void => {
+    if (!isBrowser) return;
     try {
         localStorage.setItem(key, JSON.stringify(value));
     } catch {
-        // storage full / private mode — chup-chaap ignore
+        // storage full / private mode — ignore
     }
 };
 
@@ -25,14 +31,28 @@ const tempId = () => `guest_${Date.now()}_${Math.random().toString(36).slice(2, 
 
 /* ---------------- GOALS ---------------- */
 
-export const guestGetGoals = (date) => {
+export const guestGetGoals = (date?: string): Goal[] => {
     const all = read(GOALS_KEY);
     return date ? all.filter((g) => g.date === date) : all;
 };
 
-export const guestCreateGoal = ({ title, category, date, progress, startTime, endTime }) => {
+export const guestCreateGoal = ({
+    title,
+    category,
+    date,
+    progress,
+    startTime,
+    endTime
+}: {
+    title: string;
+    category?: GoalCategory;
+    date: string;
+    progress?: number;
+    startTime?: string;
+    endTime?: string;
+}): Goal => {
     const all = read(GOALS_KEY);
-    const goal = {
+    const goal: Goal = {
         _id: tempId(),
         title,
         category: category || 'Personal',
@@ -47,7 +67,7 @@ export const guestCreateGoal = ({ title, category, date, progress, startTime, en
     return goal;
 };
 
-export const guestUpdateGoal = (id, updates) => {
+export const guestUpdateGoal = (id: string, updates: Partial<Goal>): Goal | null => {
     const all = read(GOALS_KEY);
     const idx = all.findIndex((g) => g._id === id);
     if (idx === -1) return null;
@@ -56,24 +76,27 @@ export const guestUpdateGoal = (id, updates) => {
     return all[idx];
 };
 
-export const guestSubmitDay = (date) => {
+export const guestSubmitDay = (date: string): Goal[] => {
     const all = read(GOALS_KEY);
-    for (const g of all) if (g.date === date) g.submitted = true;
+    for (const g of all) {
+        if (g.date === date) g.submitted = true;
+    }
     write(GOALS_KEY, all);
     return all.filter((g) => g.date === date);
 };
 
-export const guestDeleteGoal = (id) => {
+export const guestDeleteGoal = (id: string): void => {
     write(GOALS_KEY, read(GOALS_KEY).filter((g) => g._id !== id));
 };
 
-export const guestCopyGoals = (fromDate, toDate, goalIds) => {
+export const guestCopyGoals = (fromDate: string, toDate: string, goalIds: string[]): Goal[] => {
     const all = read(GOALS_KEY);
     let source = all.filter((g) => g.date === fromDate);
-    if (Array.isArray(goalIds) && goalIds.length)
+    if (Array.isArray(goalIds) && goalIds.length) {
         source = source.filter((g) => goalIds.includes(g._id));
+    }
 
-    const copies = source.map((g) => ({
+    const copies: Goal[] = source.map((g) => ({
         _id: tempId(),
         title: g.title,
         category: g.category,
@@ -89,10 +112,13 @@ export const guestCopyGoals = (fromDate, toDate, goalIds) => {
 
 /* ---------------- MIGRATION ---------------- */
 
-export const guestHasData = () => read(GOALS_KEY).length > 0;
+export const guestHasData = (): boolean => read(GOALS_KEY).length > 0;
 
-export const guestClear = () => {
+export const guestClear = (): void => {
+    if (!isBrowser) return;
     try {
         localStorage.removeItem(GOALS_KEY);
-    } catch { /* ignore */ }
+    } catch {
+        /* ignore */
+    }
 };

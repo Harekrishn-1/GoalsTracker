@@ -1,5 +1,6 @@
+'use client';
+
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { Target, Lock } from 'lucide-react';
 
 import AddGoalForm from '../components/AddGoalForm';
@@ -9,6 +10,7 @@ import MonthlyCalendar from '../components/MonthlyCalendar';
 import GuestBanner from '../components/GuestBanner';
 import { QuoteToasts, NudgeToasts } from '../components/Notifications';
 
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchGoals, submitDay, copyGoals, setSelectedDate } from '../slices/goalSlice';
 import { openAuthModal } from '../slices/authSlice';
 import { todayKey, shiftDays, parseKey } from '../utils/dateUtils';
@@ -16,16 +18,17 @@ import {
     motivationalQuotesData, almostThereQuotes,
     formatDisplayDate, calculateTotalProgress
 } from '../utils/constants';
+import { MotivationalQuote, NudgeToast } from '../types';
 
 export default function GoalsPage() {
-    const dispatch = useDispatch();
-    const { items, loading } = useSelector((s) => s.goals);
-    const { isAuthenticated } = useSelector((s) => s.auth);
+    const dispatch = useAppDispatch();
+    const { items, loading } = useAppSelector((s) => s.goals);
+    const { isAuthenticated } = useAppSelector((s) => s.auth);
 
     const [date, setDate] = useState(todayKey());
     const [copyOpen, setCopyOpen] = useState(false);
-    const [quotes, setQuotes] = useState([]);
-    const [nudges, setNudges] = useState([]);
+    const [quotes, setQuotes] = useState<MotivationalQuote[]>([]);
+    const [nudges, setNudges] = useState<NudgeToast[]>([]);
 
     useEffect(() => {
         dispatch(setSelectedDate(date));
@@ -52,11 +55,14 @@ export default function GoalsPage() {
 
     const handleSubmit = () => {
         if (isSubmitted) return;
-        if (!isAuthenticated) { dispatch(openAuthModal('signup')); return; }
+        if (!isAuthenticated) {
+            dispatch(openAuthModal('signup'));
+            return;
+        }
         dispatch(submitDay(date)).then(() => showQuote());
     };
 
-    const handleCopyConfirm = (goalIds) => {
+    const handleCopyConfirm = (goalIds: string[]) => {
         setCopyOpen(false);
         dispatch(copyGoals({ fromDate: date, toDate: shiftDays(date, 1), goalIds }))
             .then(() => dispatch(fetchGoals(date)));
@@ -99,18 +105,27 @@ export default function GoalsPage() {
 
                 {/* Date navigation */}
                 <div className="flex items-center justify-center gap-4">
-                    <button onClick={() => setDate(shiftDays(date, -1))}
-                        className="px-4 py-2 text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                    <button
+                        type="button"
+                        onClick={() => setDate(shiftDays(date, -1))}
+                        className="px-4 py-2 text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer"
+                    >
                         ← Previous
                     </button>
                     {date !== todayKey() && (
-                        <button onClick={() => setDate(todayKey())}
-                            className="px-4 py-2 font-medium text-white transition-colors bg-blue-500 rounded-lg hover:bg-blue-600">
+                        <button
+                            type="button"
+                            onClick={() => setDate(todayKey())}
+                            className="px-4 py-2 font-medium text-white transition-colors bg-blue-500 rounded-lg hover:bg-blue-600 cursor-pointer"
+                        >
                             Today
                         </button>
                     )}
-                    <button onClick={() => setDate(shiftDays(date, 1))}
-                        className="px-4 py-2 text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                    <button
+                        type="button"
+                        onClick={() => setDate(shiftDays(date, 1))}
+                        className="px-4 py-2 text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer"
+                    >
                         Next →
                     </button>
                 </div>
@@ -141,19 +156,31 @@ export default function GoalsPage() {
 
                 {/* Actions */}
                 <div className="flex flex-wrap items-center justify-center gap-4">
-                    <button onClick={handleSubmit} disabled={isSubmitted}
-                        className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                            isSubmitted ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600 text-white'
-                        }`}>
+                    <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={isSubmitted}
+                        className={`px-6 py-3 rounded-lg font-medium transition-colors cursor-pointer ${
+                            isSubmitted
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-orange-500 hover:bg-orange-600 text-white'
+                        }`}
+                    >
                         {isSubmitted ? 'Goals Submitted ✅' : isAuthenticated ? 'Submit Goals' : 'Sign up to Submit'}
                     </button>
 
                     <span className="font-medium text-gray-600">Total: {totalProgress}%</span>
 
-                    <button onClick={() => setCopyOpen(true)} disabled={todaysGoals.length === 0}
-                        className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                            todaysGoals.length === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600 text-white'
-                        }`}>
+                    <button
+                        type="button"
+                        onClick={() => setCopyOpen(true)}
+                        disabled={todaysGoals.length === 0}
+                        className={`px-6 py-3 rounded-lg font-medium transition-colors cursor-pointer ${
+                            todaysGoals.length === 0
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-orange-500 hover:bg-orange-600 text-white'
+                        }`}
+                    >
                         📋 Copy to Next Day
                     </button>
                 </div>
@@ -162,8 +189,12 @@ export default function GoalsPage() {
                 <MonthlyCalendar selectedDate={date} onSelectDate={setDate} />
             </div>
 
-            <CopyGoalsModal open={copyOpen} goals={todaysGoals}
-                onCancel={() => setCopyOpen(false)} onConfirm={handleCopyConfirm} />
+            <CopyGoalsModal
+                open={copyOpen}
+                goals={todaysGoals}
+                onCancel={() => setCopyOpen(false)}
+                onConfirm={handleCopyConfirm}
+            />
         </div>
     );
 }

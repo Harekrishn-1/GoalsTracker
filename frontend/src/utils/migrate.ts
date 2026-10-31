@@ -3,11 +3,10 @@ import { guestGetGoals, guestHasData, guestClear } from './guestStorage';
 
 // Login/signup ke turant baad chalta hai.
 // localStorage ka data backend pe bhejta hai, phir localStorage saaf.
-export const migrateGuestData = async () => {
+export const migrateGuestData = async (): Promise<{ goals: number }> => {
     if (!guestHasData()) return { goals: 0 };
 
     const goals = guestGetGoals();
-
     let migratedGoals = 0;
 
     try {

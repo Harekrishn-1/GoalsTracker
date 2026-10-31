@@ -1,12 +1,23 @@
-import { Trophy, X, Star, Quote, Sparkles } from 'lucide-react';
+'use client';
+
+import { X, Quote, Sparkles, Star } from 'lucide-react';
+import { MotivationalQuote, NudgeToast } from '../types';
 
 // Submit pe — left side, motivational quote
-export function QuoteToasts({ items, onHide }) {
+export function QuoteToasts({
+    items,
+    onHide
+}: {
+    items: MotivationalQuote[];
+    onHide: (id: string) => void;
+}) {
     return (
         <div className="fixed z-50 space-y-2 top-4 left-4">
             {items.map((q) => (
-                <div key={q.id}
-                    className="max-w-md p-6 text-white shadow-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl motivational-notification">
+                <div
+                    key={q.id}
+                    className="max-w-md p-6 text-white shadow-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl motivational-notification"
+                >
                     <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-3">
                             <div className="p-2 mt-1 rounded-full bg-white/20">
@@ -14,12 +25,14 @@ export function QuoteToasts({ items, onHide }) {
                             </div>
                             <div className="flex-1">
                                 <h3 className="mb-2 text-lg font-bold">Goals Submitted! 🎯</h3>
-                                <blockquote className="mb-3 text-sm italic leading-relaxed">"{q.quote}"</blockquote>
+                                <blockquote className="mb-3 text-sm italic leading-relaxed">&ldquo;{q.quote}&rdquo;</blockquote>
                                 <p className="text-xs font-medium text-indigo-200">— {q.author}</p>
                             </div>
                         </div>
-                        <button onClick={() => onHide(q.id)}
-                            className="p-1 transition-colors rounded-full text-white/80 hover:text-white hover:bg-white/20">
+                        <button
+                            onClick={() => onHide(q.id)}
+                            className="p-1 transition-colors rounded-full text-white/80 hover:text-white hover:bg-white/20 cursor-pointer"
+                        >
                             <X className="w-4 h-4" />
                         </button>
                     </div>
@@ -34,12 +47,20 @@ export function QuoteToasts({ items, onHide }) {
 }
 
 // 80%+ nudge — right side
-export function NudgeToasts({ items, onHide }) {
+export function NudgeToasts({
+    items,
+    onHide
+}: {
+    items: NudgeToast[];
+    onHide: (id: string) => void;
+}) {
     return (
         <div className="fixed z-50 space-y-2 top-4 right-4">
             {items.map((n) => (
-                <div key={n.id}
-                    className="max-w-sm p-6 text-white shadow-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-2xl celebration-notification">
+                <div
+                    key={n.id}
+                    className="max-w-sm p-6 text-white shadow-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-2xl celebration-notification"
+                >
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                             <div className="p-2 rounded-full bg-white/20">
@@ -50,8 +71,10 @@ export function NudgeToasts({ items, onHide }) {
                                 <p className="text-sm opacity-90">{n.text}</p>
                             </div>
                         </div>
-                        <button onClick={() => onHide(n.id)}
-                            className="p-1 transition-colors rounded-full text-white/80 hover:text-white hover:bg-white/20">
+                        <button
+                            onClick={() => onHide(n.id)}
+                            className="p-1 transition-colors rounded-full text-white/80 hover:text-white hover:bg-white/20 cursor-pointer"
+                        >
                             <X className="w-4 h-4" />
                         </button>
                     </div>

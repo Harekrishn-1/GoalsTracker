@@ -1,20 +1,30 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 import { Trophy, Lock, Check, Sparkles } from 'lucide-react';
+import { useAppDispatch } from '../store/hooks';
 import { editGoal, removeGoal } from '../slices/goalSlice';
 import { getCategoryColor, categories } from '../utils/constants';
 import { formatTimeRange } from '../utils/dateUtils';
+import { Goal } from '../types';
 
-export default function GoalCard({ goal, onComplete, onAlmost }) {
-    const dispatch = useDispatch();
+export default function GoalCard({
+    goal,
+    onComplete,
+    onAlmost
+}: {
+    goal: Goal;
+    onComplete?: (title: string) => void;
+    onAlmost?: () => void;
+}) {
+    const dispatch = useAppDispatch();
     const [editing, setEditing] = useState(false);
 
     const [title, setTitle] = useState(goal.title);
     const [category, setCategory] = useState(goal.category);
     const [startTime, setStartTime] = useState(goal.startTime || '');
     const [endTime, setEndTime] = useState(goal.endTime || '');
-    const [progressInput, setProgressInput] = useState(goal.progress);
-
+    const [progressInput, setProgressInput] = useState<number | string>(goal.progress);
 
     useEffect(() => {
         setProgressInput(goal.progress);
@@ -24,10 +34,10 @@ export default function GoalCard({ goal, onComplete, onAlmost }) {
     const completed = goal.progress === 100;
     const timeRange = formatTimeRange(goal.startTime, goal.endTime);
 
-    const commitProgress = (value) => {
+    const commitProgress = (value: number | string) => {
         let progress = Number(value);
         if (value === '' || Number.isNaN(progress)) {
-            setProgressInput(goal.progress);   // galat input pe wapas purana
+            setProgressInput(goal.progress); // galat input pe wapas purana
             return;
         }
         progress = Math.min(100, Math.max(0, progress));
@@ -38,6 +48,7 @@ export default function GoalCard({ goal, onComplete, onAlmost }) {
         if (progress === 100 && prev !== 100) onComplete?.(goal.title);
         else if (progress >= 80 && progress < 100 && prev < 80) onAlmost?.();
     };
+
     const saveEdit = () => {
         const clean = title.trim();
         if (!clean) return;
@@ -70,39 +81,41 @@ export default function GoalCard({ goal, onComplete, onAlmost }) {
                         maxLength={100}
                         autoFocus
                         placeholder="Goal title"
-                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                     />
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                         <select
                             value={category}
                             onChange={(e) => setCategory(e.target.value)}
-                            className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                         >
-                            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                            {categories.map((c) => (
+                                <option key={c} value={c}>{c}</option>
+                            ))}
                         </select>
                         <input
                             type="time"
                             value={startTime}
                             onChange={(e) => setStartTime(e.target.value)}
-                            className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                         />
                         <input
                             type="time"
                             value={endTime}
                             onChange={(e) => setEndTime(e.target.value)}
-                            className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                         />
                     </div>
                     <div className="flex space-x-3">
                         <button
                             onClick={saveEdit}
-                            className="px-6 py-2 font-medium text-white transition-colors bg-green-500 rounded-lg hover:bg-green-600"
+                            className="px-6 py-2 font-medium text-white transition-colors bg-green-500 rounded-lg hover:bg-green-600 cursor-pointer"
                         >
                             Save
                         </button>
                         <button
                             onClick={cancelEdit}
-                            className="px-6 py-2 font-medium text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
+                            className="px-6 py-2 font-medium text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer"
                         >
                             Cancel
                         </button>
@@ -162,18 +175,22 @@ export default function GoalCard({ goal, onComplete, onAlmost }) {
                                 value={progressInput}
                                 onChange={(e) => setProgressInput(e.target.value)}
                                 onBlur={() => commitProgress(progressInput)}
-                                onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                                }}
                                 disabled={locked}
-                                className={`w-16 px-2 py-1 border border-gray-300 rounded text-center ${locked ? 'bg-gray-100 cursor-not-allowed' : ''
-                                    }`}
+                                className={`w-16 px-2 py-1 border border-gray-300 rounded text-center outline-none ${
+                                    locked ? 'bg-gray-100 cursor-not-allowed' : ''
+                                }`}
                             />
                             <span>%</span>
 
                             <div className="flex-1 max-w-xs">
                                 <div className="w-full h-2 bg-gray-200 rounded-full">
                                     <div
-                                        className={`h-2 rounded-full transition-all duration-500 ${completed ? 'bg-gradient-to-r from-green-400 to-green-600' : 'bg-blue-500'
-                                            }`}
+                                        className={`h-2 rounded-full transition-all duration-500 ${
+                                            completed ? 'bg-gradient-to-r from-green-400 to-green-600' : 'bg-blue-500'
+                                        }`}
                                         style={{ width: `${goal.progress}%` }}
                                     />
                                 </div>
@@ -194,7 +211,7 @@ export default function GoalCard({ goal, onComplete, onAlmost }) {
                     {!locked && (
                         <button
                             onClick={() => setEditing(true)}
-                            className="px-4 py-2 text-gray-700 transition-colors bg-gray-300 rounded-lg hover:bg-gray-400"
+                            className="px-4 py-2 text-gray-700 transition-colors bg-gray-300 rounded-lg hover:bg-gray-400 cursor-pointer"
                         >
                             Edit
                         </button>
@@ -202,10 +219,11 @@ export default function GoalCard({ goal, onComplete, onAlmost }) {
                     <button
                         onClick={() => dispatch(removeGoal(goal._id))}
                         disabled={locked}
-                        className={`px-4 py-2 rounded-lg transition-colors ${locked
-                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                            : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
-                            }`}
+                        className={`px-4 py-2 rounded-lg transition-colors cursor-pointer ${
+                            locked
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
+                        }`}
                     >
                         Delete
                     </button>

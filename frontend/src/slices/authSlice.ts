@@ -1,67 +1,92 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axiosClient from '../utils/axiosClient';
+import { User, RegisterCredentials, LoginCredentials } from '../types';
+import axios from 'axios';
 
-export const registerUser = createAsyncThunk(
+export const registerUser = createAsyncThunk<User, RegisterCredentials, { rejectValue: string }>(
     'auth/register',
     async (credentials, { rejectWithValue }) => {
         try {
             const res = await axiosClient.post('/user/register', credentials);
             return res.data.user;
-        } catch (err) {
-            return rejectWithValue(err.response?.data?.message || 'Registration failed');
+        } catch (err: unknown) {
+            if (axios.isAxiosError(err)) {
+                return rejectWithValue(err.response?.data?.message || 'Registration failed');
+            }
+            return rejectWithValue('Registration failed');
         }
     }
 );
 
-export const loginUser = createAsyncThunk(
+export const loginUser = createAsyncThunk<User, LoginCredentials, { rejectValue: string }>(
     'auth/login',
     async (credentials, { rejectWithValue }) => {
         try {
             const res = await axiosClient.post('/user/login', credentials);
             return res.data.user;
-        } catch (err) {
-            return rejectWithValue(err.response?.data?.message || 'Login failed');
+        } catch (err: unknown) {
+            if (axios.isAxiosError(err)) {
+                return rejectWithValue(err.response?.data?.message || 'Login failed');
+            }
+            return rejectWithValue('Login failed');
         }
     }
 );
 
 // App load pe chalta hai — cookie valid hai ya nahi
-export const checkAuth = createAsyncThunk(
+export const checkAuth = createAsyncThunk<User, void, { rejectValue: string }>(
     'auth/check',
     async (_, { rejectWithValue }) => {
         try {
             const res = await axiosClient.get('/user/check');
             return res.data.user;
-        } catch (err) {
-            return rejectWithValue(err.response?.data?.message || 'Not authenticated');
+        } catch (err: unknown) {
+            if (axios.isAxiosError(err)) {
+                return rejectWithValue(err.response?.data?.message || 'Not authenticated');
+            }
+            return rejectWithValue('Not authenticated');
         }
     }
 );
 
-export const logoutUser = createAsyncThunk(
+export const logoutUser = createAsyncThunk<null, void, { rejectValue: string }>(
     'auth/logout',
     async (_, { rejectWithValue }) => {
         try {
             await axiosClient.post('/user/logout');
             return null;
-        } catch (err) {
-            return rejectWithValue(err.response?.data?.message || 'Logout failed');
+        } catch (err: unknown) {
+            if (axios.isAxiosError(err)) {
+                return rejectWithValue(err.response?.data?.message || 'Logout failed');
+            }
+            return rejectWithValue('Logout failed');
         }
     }
 );
 
+export interface AuthState {
+    user: User | null;
+    isAuthenticated: boolean;
+    loading: boolean;
+    error: string | null;
+    authModalOpen: boolean;
+    authModalMode: 'login' | 'signup';
+}
+
+const initialState: AuthState = {
+    user: null,
+    isAuthenticated: false,
+    loading: true, // pehle checkAuth complete ho, tab UI dikhao
+    error: null,
+    authModalOpen: false,
+    authModalMode: 'login'
+};
+
 const authSlice = createSlice({
     name: 'auth',
-    initialState: {
-        user: null,
-        isAuthenticated: false,
-        loading: true,        // pehle checkAuth complete ho, tab UI dikhao
-        error: null,
-        authModalOpen: false, // submit dabane pe khulta hai
-        authModalMode: 'login'
-    },
+    initialState,
     reducers: {
-        openAuthModal: (state, action) => {
+        openAuthModal: (state, action: PayloadAction<'login' | 'signup' | undefined>) => {
             state.authModalOpen = true;
             state.authModalMode = action.payload || 'login';
             state.error = null;
@@ -75,7 +100,7 @@ const authSlice = createSlice({
         }
     },
     extraReducers: (builder) => {
-        const success = (state, action) => {
+        const success = (state: AuthState, action: PayloadAction<User>) => {
             state.loading = false;
             state.user = action.payload;
             state.isAuthenticated = !!action.payload;
@@ -83,11 +108,11 @@ const authSlice = createSlice({
             state.authModalOpen = false;
         };
 
-        const failure = (state, action) => {
+        const failure = (state: AuthState, action: PayloadAction<string | undefined>) => {
             state.loading = false;
             state.user = null;
             state.isAuthenticated = false;
-            state.error = action.payload;
+            state.error = action.payload || null;
         };
 
         builder

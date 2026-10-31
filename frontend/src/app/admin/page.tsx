@@ -1,10 +1,24 @@
-import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router';
-import { Users, Activity, Target, CheckCircle2, UserPlus, TrendingUp } from 'lucide-react';
-import { fetchAdminStats } from '../slices/adminSlice';
+'use client';
 
-function StatCard({ icon: Icon, label, value, sub, color }) {
+import { useEffect, ElementType } from 'react';
+import { useRouter } from 'next/navigation';
+import { Users, Activity, Target, CheckCircle2, UserPlus, TrendingUp } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchAdminStats } from '../../slices/adminSlice';
+
+function StatCard({
+    icon: Icon,
+    label,
+    value,
+    sub,
+    color
+}: {
+    icon: ElementType;
+    label: string;
+    value: number | string;
+    sub?: string;
+    color: string;
+}) {
     return (
         <div className="p-6 border border-purple-100 bg-white/80 backdrop-blur-sm rounded-xl">
             <div className="flex items-center justify-between mb-3">
@@ -20,17 +34,21 @@ function StatCard({ icon: Icon, label, value, sub, color }) {
 }
 
 export default function AdminPage() {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const { user, isAuthenticated, loading: authLoading } = useSelector((s) => s.auth);
-    const { stats, loading, error } = useSelector((s) => s.admin);
+    const dispatch = useAppDispatch();
+    const router = useRouter();
+    const { user, isAuthenticated, loading: authLoading } = useAppSelector((s) => s.auth);
+    const { stats, loading, error } = useAppSelector((s) => s.admin);
 
     useEffect(() => {
-        if (!authLoading && (!isAuthenticated || user?.role !== 'admin')) navigate('/');
-    }, [authLoading, isAuthenticated, user, navigate]);
+        if (!authLoading && (!isAuthenticated || user?.role !== 'admin')) {
+            router.push('/');
+        }
+    }, [authLoading, isAuthenticated, user, router]);
 
     useEffect(() => {
-        if (isAuthenticated && user?.role === 'admin') dispatch(fetchAdminStats());
+        if (isAuthenticated && user?.role === 'admin') {
+            dispatch(fetchAdminStats());
+        }
     }, [dispatch, isAuthenticated, user]);
 
     if (user?.role !== 'admin') return null;
@@ -57,13 +75,23 @@ export default function AdminPage() {
                 {stats && (
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         <StatCard icon={Users} label="Total Users" value={stats.totalUsers} color="bg-blue-500" />
-                        <StatCard icon={Activity} label="Active Today" value={stats.activeToday}
-                            sub="Signed in or edited in last 24h" color="bg-green-500" />
+                        <StatCard
+                            icon={Activity}
+                            label="Active Today"
+                            value={stats.activeToday}
+                            sub="Signed in or edited in last 24h"
+                            color="bg-green-500"
+                        />
                         <StatCard icon={TrendingUp} label="Active This Week" value={stats.activeThisWeek} color="bg-purple-500" />
                         <StatCard icon={UserPlus} label="New This Week" value={stats.newThisWeek} color="bg-orange-500" />
                         <StatCard icon={Target} label="Total Goals" value={stats.totalGoals} color="bg-indigo-500" />
-                        <StatCard icon={CheckCircle2} label="Goals Completed" value={stats.goalsCompleted}
-                            sub={`${stats.completionRate}% completion rate`} color="bg-emerald-500" />
+                        <StatCard
+                            icon={CheckCircle2}
+                            label="Goals Completed"
+                            value={stats.goalsCompleted}
+                            sub={`${stats.completionRate}% completion rate`}
+                            color="bg-emerald-500"
+                        />
                     </div>
                 )}
             </div>

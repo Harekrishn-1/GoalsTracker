@@ -1,3 +1,5 @@
+import { Goal } from '../types';
+
 // Submit ke baad — Indian icons, English mein
 export const motivationalQuotesData = [
     { quote: "Dream is not that which you see while sleeping, it is something that does not let you sleep.", author: "A.P.J. Abdul Kalam" },
@@ -30,7 +32,7 @@ export const almostThereQuotes = [
 export const categories = ['Personal', 'Study', 'Work', 'Health'];
 
 // Original category colors
-export const getCategoryColor = (category) => {
+export const getCategoryColor = (category: string) => {
     switch (category) {
         case 'Personal': return 'text-purple-600 bg-purple-100';
         case 'Study':    return 'text-blue-600 bg-blue-100';
@@ -40,12 +42,12 @@ export const getCategoryColor = (category) => {
     }
 };
 
-export const formatDisplayDate = (date) =>
+export const formatDisplayDate = (date: Date) =>
     date.toLocaleDateString('en-US', {
         weekday: 'short', month: 'short', day: '2-digit', year: 'numeric'
     });
 
-export const calculateTotalProgress = (goals) => {
+export const calculateTotalProgress = (goals: Goal[]) => {
     if (goals.length === 0) return 0;
-    return Math.round(goals.reduce((sum, g) => sum + g.progress, 0) / goals.length);
+    return Math.round(goals.reduce((sum, g) => sum + (g.progress || 0), 0) / goals.length);
 };

@@ -24,7 +24,7 @@ A clean, full-stack app for tracking daily goals. Use it without an account; sig
 
 | Layer | Tech |
 |---|---|
-| Frontend | React 19, Vite, Redux Toolkit, React Router 7 |
+| Frontend | Next.js 15 (App Router), TypeScript, React 19, Redux Toolkit |
 | Styling | Tailwind CSS 4 |
 | Forms | React Hook Form |
 | Backend | Node.js, Express 5 |
@@ -44,12 +44,12 @@ cp .env.example .env      # fill in your credentials
 npm run dev               # http://localhost:3000
 ```
 
-**Frontend**
+**Frontend (Next.js)**
 ```bash
 cd frontend
 npm install
-cp .env.example .env
-npm run dev               # http://localhost:5173
+cp .env.example .env.local
+npm run dev               # http://localhost:3000 or http://localhost:3001
 ```
 
 ### Making yourself an admin

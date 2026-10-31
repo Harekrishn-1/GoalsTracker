@@ -20,7 +20,22 @@ const userMiddleware = async (req, res, next) => {
             throw new Error('User does not exist');
 
         // logout ke baad token blocklist mein chala jaata hai
-        const isBlocked = await redisClient.exists(`token:${token}`);
+        // Agar Redis slow/down ho toh request hang na ho (1.5s max timeout)
+        let isBlocked = false;
+        if (redisClient.isOpen) {
+            try {
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Redis timeout')), 1500)
+                );
+                isBlocked = await Promise.race([
+                    redisClient.exists(`token:${token}`),
+                    timeoutPromise
+                ]);
+            } catch (redisErr) {
+                console.log('Redis check warning:', redisErr.message);
+            }
+        }
+
         if (isBlocked)
             throw new Error('Token is blocked');
 
@@ -29,10 +44,10 @@ const userMiddleware = async (req, res, next) => {
         const last = result.lastActiveAt ? result.lastActiveAt.getTime() : 0;
         if (now - last > 60 * 1000) {
             result.lastActiveAt = new Date();
-            result.save().catch(() => {});   // fail ho to request na ruke
+            result.save().catch(() => {}); // fail ho to request na ruke
         }
 
-        req.result = result;   // aage ke controllers isse userId lete hain
+        req.result = result; // aage ke controllers isse userId lete hain
         next();
     } catch (err) {
         res.status(401).send('Error: ' + err.message);

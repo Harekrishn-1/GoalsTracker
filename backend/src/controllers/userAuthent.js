@@ -9,7 +9,7 @@ const cookieOptions = {
     httpOnly: true,                                  // JS se cookie padhi na ja sake (XSS protection)
     secure: process.env.NODE_ENV === 'production',   // production mein sirf HTTPS
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 30*24*60 * 60 * 1000                           // 1 ghanta
+    maxAge: 30*24*60 * 60 * 1000                           // 30 din
 };
 
 const register = async (req, res) => {
@@ -34,7 +34,7 @@ const register = async (req, res) => {
         const token = jwt.sign(
             { _id: user._id, emailId: user.emailId, role: 'user' },
             process.env.JWT_KEY,
-            { expiresIn:30*24* 60 * 60 }
+            { expiresIn: 30*24*60 * 60 }
         );
 
         res.cookie('token', token, cookieOptions);
@@ -49,7 +49,6 @@ const register = async (req, res) => {
             message: 'Registered successfully'
         });
     } catch (err) {
-        // validator ke messages seedhe bhejo, "Error:" prefix ke bina
         res.status(400).json({ message: err.message });
     }
 };
@@ -63,9 +62,6 @@ const login = async (req, res) => {
 
         const user = await User.findOne({ emailId });
 
-        // NOTE: user null ho to bcrypt.compare crash karta hai — pehle check
-        // Aur "user nahi mila" vs "password galat" ka alag message nahi dete,
-        // warna attacker ko pata chal jaata hai ki email registered hai ya nahi.
         if (!user)
             throw new Error('Invalid credentials');
 
@@ -80,12 +76,12 @@ const login = async (req, res) => {
         );
 
         res.cookie("token", token, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    path: "/",
-    maxAge: 30*24*60 * 60 * 1000,
-});
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            path: "/",
+            maxAge: 30*24*60 * 60 * 1000,
+        });
 
         res.status(200).json({
             user: {
@@ -105,14 +101,16 @@ const logout = async (req, res) => {
     try {
         const { token } = req.cookies;
 
-        if (token) {
-            const payload = jwt.decode(token);
-
-            // Token ko blocklist mein daala — JWT stateless hota hai, server-side
-            // "invalidate" karne ka yahi tareeka hai. TTL = token ki apni expiry,
-            // uske baad Redis khud key hata dega (memory waste nahi hoti).
-            await redisClient.set(`token:${token}`, 'Blocked');
-            await redisClient.expireAt(`token:${token}`, payload.exp);
+        if (token && redisClient.isOpen) {
+            try {
+                const payload = jwt.decode(token);
+                if (payload && payload.exp) {
+                    await redisClient.set(`token:${token}`, 'Blocked');
+                    await redisClient.expireAt(`token:${token}`, payload.exp);
+                }
+            } catch (redisErr) {
+                console.log('Redis logout blocklist error:', redisErr.message);
+            }
         }
 
         res.cookie('token', null, { ...cookieOptions, maxAge: 0 });

@@ -1,21 +1,25 @@
-import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+'use client';
+
+import { useState, FormEvent } from 'react';
+import { useAppDispatch } from '../store/hooks';
 import { addGoal } from '../slices/goalSlice';
 import { categories } from '../utils/constants';
 
-export default function AddGoalForm({ date }) {
-    const dispatch = useDispatch();
+export default function AddGoalForm({ date }: { date: string }) {
+    const dispatch = useAppDispatch();
     const [title, setTitle] = useState('');
     const [category, setCategory] = useState('Personal');
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
 
-    const submit = (e) => {
+    const submit = (e: FormEvent) => {
         e.preventDefault();
         const clean = title.trim();
         if (!clean) return;
         dispatch(addGoal({ title: clean, category, startTime, endTime, date, progress: 0 }));
-        setTitle(''); setStartTime(''); setEndTime('');
+        setTitle('');
+        setStartTime('');
+        setEndTime('');
     };
 
     return (
@@ -30,7 +34,7 @@ export default function AddGoalForm({ date }) {
                         placeholder="Enter goal title..."
                         required
                         maxLength={100}
-                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                     />
                 </div>
                 <div>
@@ -38,23 +42,35 @@ export default function AddGoalForm({ date }) {
                     <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                     >
-                        {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                        {categories.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                        ))}
                     </select>
                 </div>
                 <div>
                     <label className="block mb-2 text-sm font-medium text-gray-700">Start Time</label>
-                    <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
-                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                    <input
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                    />
                 </div>
                 <div>
                     <label className="block mb-2 text-sm font-medium text-gray-700">End Time</label>
-                    <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)}
-                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                    <input
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                    />
                 </div>
-                <button type="submit"
-                    className="px-6 py-2 font-medium text-white transition-colors bg-green-500 rounded-lg hover:bg-green-600">
+                <button
+                    type="submit"
+                    className="px-6 py-2 font-medium text-white transition-colors bg-green-500 rounded-lg hover:bg-green-600 cursor-pointer"
+                >
                     Add
                 </button>
             </form>

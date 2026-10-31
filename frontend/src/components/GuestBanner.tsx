@@ -1,11 +1,13 @@
-import { useDispatch, useSelector } from 'react-redux';
+'use client';
+
 import { CloudOff } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { openAuthModal } from '../slices/authSlice';
 
 export default function GuestBanner() {
-    const dispatch = useDispatch();
-    const { isAuthenticated } = useSelector((s) => s.auth);
-    const goals = useSelector((s) => s.goals.allItems);
+    const dispatch = useAppDispatch();
+    const { isAuthenticated } = useAppSelector((s) => s.auth);
+    const goals = useAppSelector((s) => s.goals.allItems);
 
     if (isAuthenticated) return null;
     const count = goals?.length || 0;
@@ -17,8 +19,10 @@ export default function GuestBanner() {
             <span className="flex-1 text-sm text-yellow-800">
                 You have {count} goal{count === 1 ? '' : 's'} saved only on this device.
             </span>
-            <button onClick={() => dispatch(openAuthModal('signup'))}
-                className="px-4 py-2 text-sm font-medium text-white transition-colors bg-yellow-600 rounded-lg hover:bg-yellow-700 shrink-0">
+            <button
+                onClick={() => dispatch(openAuthModal('signup'))}
+                className="px-4 py-2 text-sm font-medium text-white transition-colors bg-yellow-600 rounded-lg hover:bg-yellow-700 shrink-0 cursor-pointer"
+            >
                 Save my goals
             </button>
         </div>
