@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trophy, Lock, Check, Sparkles } from 'lucide-react';
+import { Trophy, Lock, Check, Sparkles, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
 import { useAppDispatch } from '../store/hooks';
 import { editGoal, removeGoal } from '../slices/goalSlice';
 import { getCategoryColor, categories } from '../utils/constants';
@@ -11,11 +11,25 @@ import { Goal } from '../types';
 export default function GoalCard({
     goal,
     onComplete,
-    onAlmost
+    onAlmost,
+    index,
+    totalGoals,
+    onMoveUp,
+    onMoveDown,
+    onDragStart,
+    onDragOver,
+    onDrop
 }: {
     goal: Goal;
     onComplete?: (title: string) => void;
     onAlmost?: () => void;
+    index?: number;
+    totalGoals?: number;
+    onMoveUp?: () => void;
+    onMoveDown?: () => void;
+    onDragStart?: (index: number) => void;
+    onDragOver?: (e: React.DragEvent) => void;
+    onDrop?: (index: number) => void;
 }) {
     const dispatch = useAppDispatch();
     const [editing, setEditing] = useState(false);
@@ -68,12 +82,12 @@ export default function GoalCard({
         ? 'bg-green-50 border-2 border-green-200'
         : completed
             ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 shadow-lg'
-            : 'bg-gray-100';
+            : 'bg-white border-2 border-gray-200 hover:border-blue-300 shadow-2xs';
 
     /* ---------- EDIT MODE ---------- */
     if (editing && !locked) {
         return (
-            <div className="p-6 bg-white border-2 border-blue-300 rounded-xl">
+            <div className="p-6 bg-white border-2 border-blue-400 rounded-xl shadow-sm">
                 <div className="space-y-3">
                     <input
                         value={title}
@@ -127,31 +141,67 @@ export default function GoalCard({
 
     /* ---------- VIEW MODE ---------- */
     return (
-        <div className={`rounded-xl p-6 transition-all duration-300 ${cardClass}`}>
-            <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                    {/* Time upar — green mein */}
+        <div
+            draggable={!locked && !editing}
+            onDragStart={() => index !== undefined && onDragStart?.(index)}
+            onDragOver={(e) => onDragOver?.(e)}
+            onDrop={() => index !== undefined && onDrop?.(index)}
+            className={`rounded-xl p-5 transition-all duration-300 relative ${cardClass}`}
+        >
+            <div className="flex items-start justify-between gap-3">
+                {/* Left Drag Grip / Reorder Buttons (Up & Down) */}
+                {!locked && (
+                    <div className="flex flex-col items-center justify-center self-center shrink-0 p-1 bg-gray-50/80 rounded-lg border border-gray-200">
+                        <button
+                            type="button"
+                            disabled={index === 0}
+                            onClick={onMoveUp}
+                            title="Move goal up"
+                            className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                            <ChevronUp className="w-4 h-4" />
+                        </button>
+
+                        <span title="Drag to reorder">
+                            <GripVertical className="w-3.5 h-3.5 text-gray-400 my-0.5 cursor-grab active:cursor-grabbing" />
+                        </span>
+
+                        <button
+                            type="button"
+                            disabled={index !== undefined && totalGoals !== undefined && index === totalGoals - 1}
+                            onClick={onMoveDown}
+                            title="Move goal down"
+                            className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                            <ChevronDown className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
+
+                {/* Main Goal Details */}
+                <div className="flex-1 min-w-0">
+                    {/* Time range header */}
                     {timeRange && (
                         <p className="mb-1 text-sm font-semibold text-green-600">{timeRange}</p>
                     )}
 
-                    {/* Goal naam neeche — dark */}
-                    <div className="flex items-center mb-2 space-x-3">
-                        <h3 className="text-xl font-bold text-gray-900">{goal.title}</h3>
+                    {/* Goal Title */}
+                    <div className="flex flex-wrap items-center mb-2 gap-2">
+                        <h3 className="text-xl font-bold text-gray-900 break-words">{goal.title}</h3>
 
                         {completed && !locked && (
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-1.5">
                                 <Trophy className="w-5 h-5 text-yellow-500" />
-                                <span className="px-3 py-1 text-xs font-bold text-white rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 animate-pulse">
+                                <span className="px-2.5 py-0.5 text-xs font-bold text-white rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 animate-pulse">
                                     COMPLETED! 🎉
                                 </span>
                             </div>
                         )}
 
                         {locked && (
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-1.5">
                                 <Lock className="w-4 h-4 text-green-600" />
-                                <span className="px-2 py-1 text-xs font-medium text-white bg-green-500 rounded-full">
+                                <span className="px-2 py-0.5 text-xs font-medium text-white bg-green-500 rounded-full">
                                     SUBMITTED
                                 </span>
                             </div>
@@ -159,15 +209,16 @@ export default function GoalCard({
                     </div>
 
                     <div className="space-y-2 text-sm text-gray-600">
-                        <p>
-                            Category:{' '}
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(goal.category)}`}>
+                        <p className="flex items-center gap-1.5">
+                            <span>Category:</span>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getCategoryColor(goal.category)}`}>
                                 {goal.category}
                             </span>
                         </p>
 
-                        <div className="flex items-center space-x-3">
-                            <span>Progress:</span>
+                        {/* Progress Bar & Input */}
+                        <div className="flex items-center space-x-3 pt-1">
+                            <span className="text-xs font-medium text-gray-600">Progress:</span>
                             <input
                                 type="number"
                                 min="0"
@@ -179,16 +230,16 @@ export default function GoalCard({
                                     if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
                                 }}
                                 disabled={locked}
-                                className={`w-16 px-2 py-1 border border-gray-300 rounded text-center outline-none ${
-                                    locked ? 'bg-gray-100 cursor-not-allowed' : ''
+                                className={`w-16 px-2 py-1 border border-gray-300 rounded text-center font-semibold text-sm outline-none focus:ring-2 focus:ring-blue-500 ${
+                                    locked ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'
                                 }`}
                             />
-                            <span>%</span>
+                            <span className="text-xs font-bold text-gray-600">%</span>
 
                             <div className="flex-1 max-w-xs">
-                                <div className="w-full h-2 bg-gray-200 rounded-full">
+                                <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
                                     <div
-                                        className={`h-2 rounded-full transition-all duration-500 ${
+                                        className={`h-full rounded-full transition-all duration-500 ${
                                             completed ? 'bg-gradient-to-r from-green-400 to-green-600' : 'bg-blue-500'
                                         }`}
                                         style={{ width: `${goal.progress}%` }}
@@ -206,12 +257,12 @@ export default function GoalCard({
                     </div>
                 </div>
 
-                {/* Edit + Delete — sirf jab locked nahi */}
-                <div className="flex space-x-2">
+                {/* Edit + Delete — only when not locked */}
+                <div className="flex items-center space-x-2 shrink-0">
                     {!locked && (
                         <button
                             onClick={() => setEditing(true)}
-                            className="px-4 py-2 text-gray-700 transition-colors bg-gray-300 rounded-lg hover:bg-gray-400 cursor-pointer"
+                            className="px-3.5 py-1.5 text-xs font-semibold text-gray-700 transition-colors bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer"
                         >
                             Edit
                         </button>
@@ -219,10 +270,10 @@ export default function GoalCard({
                     <button
                         onClick={() => dispatch(removeGoal(goal._id))}
                         disabled={locked}
-                        className={`px-4 py-2 rounded-lg transition-colors cursor-pointer ${
+                        className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
                             locked
-                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : 'bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-700'
                         }`}
                     >
                         Delete

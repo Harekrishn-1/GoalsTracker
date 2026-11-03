@@ -14,6 +14,39 @@ export interface Goal {
     updatedAt?: string;
 }
 
+export interface TargetGoal {
+    _id: string;
+    title: string;
+    category: GoalCategory;
+    deadline: string; // 'YYYY-MM-DD'
+    progress: number;
+    status: 'pending' | 'in_progress' | 'completed';
+    remindersEnabled: boolean;
+    remindersSent?: {
+        twoDay: boolean;
+        oneDay: boolean;
+        zeroDay: boolean;
+    };
+    notes?: string;
+    userId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface CreateTargetGoalPayload {
+    title: string;
+    category?: GoalCategory;
+    deadline: string;
+    progress?: number;
+    remindersEnabled?: boolean;
+    notes?: string;
+}
+
+export interface UpdateTargetGoalPayload {
+    id: string;
+    updates: Partial<Pick<TargetGoal, 'title' | 'category' | 'deadline' | 'progress' | 'remindersEnabled' | 'notes'>>;
+}
+
 export interface User {
     _id: string;
     firstName: string;

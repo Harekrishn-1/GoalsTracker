@@ -9,6 +9,7 @@ const redisClient = require('./config/redis');
 const authRouter = require('./routes/userAuth');
 const goalRouter = require('./routes/goalRoutes');
 const adminRouter = require('./routes/adminRoutes');
+const targetGoalRouter = require('./routes/targetGoalRoutes');
 
 const app = express();
 app.set("trust proxy", 1);
@@ -37,6 +38,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/user', authRouter);
 app.use('/goal', goalRouter);
+app.use('/target-goal', targetGoalRouter);
 app.use('/admin', adminRouter);
 
 const InitializeConnection = async () => {

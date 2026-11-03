@@ -2,7 +2,8 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axiosClient from '../utils/axiosClient';
 import {
     guestGetGoals, guestCreateGoal, guestUpdateGoal,
-    guestDeleteGoal, guestCopyGoals, guestSubmitDay
+    guestDeleteGoal, guestCopyGoals, guestSubmitDay,
+    guestReorderGoals
 } from '../utils/guestStorage';
 import { Goal, CreateGoalPayload, EditGoalPayload, CopyGoalsPayload } from '../types';
 import { RootState } from '../store/store';
@@ -180,6 +181,30 @@ const goalSlice = createSlice({
         },
         clearGoalError: (state) => {
             state.error = null;
+        },
+        moveGoal: (state, action: PayloadAction<{ id: string; direction: 'up' | 'down' }>) => {
+            const { id, direction } = action.payload;
+            const index = state.items.findIndex((g) => g._id === id);
+            if (index === -1) return;
+            const targetIndex = direction === 'up' ? index - 1 : index + 1;
+            if (targetIndex < 0 || targetIndex >= state.items.length) return;
+
+            const temp = state.items[index];
+            state.items[index] = state.items[targetIndex];
+            state.items[targetIndex] = temp;
+
+            guestReorderGoals(state.items);
+        },
+        reorderGoals: (state, action: PayloadAction<{ sourceIndex: number; destinationIndex: number }>) => {
+            const { sourceIndex, destinationIndex } = action.payload;
+            if (
+                sourceIndex < 0 || sourceIndex >= state.items.length ||
+                destinationIndex < 0 || destinationIndex >= state.items.length
+            ) return;
+            const [moved] = state.items.splice(sourceIndex, 1);
+            state.items.splice(destinationIndex, 0, moved);
+
+            guestReorderGoals(state.items);
         }
     },
     extraReducers: (builder) => {
@@ -250,5 +275,5 @@ const goalSlice = createSlice({
     }
 });
 
-export const { setSelectedDate, clearGoalError } = goalSlice.actions;
+export const { setSelectedDate, clearGoalError, moveGoal, reorderGoals } = goalSlice.actions;
 export default goalSlice.reducer;
