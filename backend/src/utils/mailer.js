@@ -99,7 +99,7 @@ const sendGoalReminderEmail = async ({ to, userName, goalTitle, category, deadli
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                from: process.env.RESEND_FROM || 'GoalsTracker <onboarding@resend.dev>',
+                from: process.env.RESEND_FROM || 'GoalsTracker <noreply@harekrishn.me>',
                 to: [to],
                 subject: `${urgencyLabel} - "${goalTitle}" is due on ${deadline}`,
                 html: html
