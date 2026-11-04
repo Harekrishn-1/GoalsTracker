@@ -180,10 +180,45 @@ const checkAndSendReminders = async (req, res) => {
     }
 };
 
+// POST /target-goal/test-email - Send an instant test reminder email to logged-in user
+const sendTestEmail = async (req, res) => {
+    try {
+        const user = await User.findById(req.result._id);
+        if (!user || !user.emailId) {
+            return res.status(400).json({ message: 'User email not found' });
+        }
+
+        const mailRes = await sendGoalReminderEmail({
+            to: user.emailId,
+            userName: user.firstName || 'Goal Tracker User',
+            goalTitle: 'Sample Target Goal (Test Email)',
+            category: 'Study',
+            deadline: toKey(new Date()),
+            daysLeft: 1,
+            progress: 75
+        });
+
+        if (!mailRes.success) {
+            return res.status(400).json({
+                message: 'Failed to send email via Resend',
+                details: mailRes.error || mailRes.reason
+            });
+        }
+
+        res.status(200).json({
+            message: `Test email sent successfully to ${user.emailId}! Check your inbox and spam folder.`,
+            id: mailRes.data?.id
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Error sending test email: ' + err.message });
+    }
+};
+
 module.exports = {
     getTargetGoals,
     createTargetGoal,
     updateTargetGoal,
     deleteTargetGoal,
-    checkAndSendReminders
+    checkAndSendReminders,
+    sendTestEmail
 };

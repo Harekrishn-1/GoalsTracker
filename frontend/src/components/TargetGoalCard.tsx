@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { TargetGoal } from '../types';
-import { useAppDispatch } from '../store/hooks';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { editTargetGoal, removeTargetGoal } from '../slices/targetGoalSlice';
+import { openAuthModal } from '../slices/authSlice';
 import { getCategoryColor, categories } from '../utils/constants';
 import {
     Calendar, Bell, BellOff, CheckCircle2, Clock, Trash2, Edit3, Save, X,
@@ -12,6 +13,7 @@ import {
 
 export default function TargetGoalCard({ goal }: { goal: TargetGoal }) {
     const dispatch = useAppDispatch();
+    const { isAuthenticated } = useAppSelector((s) => s.auth);
     const [editing, setEditing] = useState(false);
     const [title, setTitle] = useState(goal.title);
     const [category, setCategory] = useState(goal.category);
@@ -207,7 +209,15 @@ export default function TargetGoalCard({ goal }: { goal: TargetGoal }) {
                     Target: <strong className="text-gray-700">{goal.deadline}</strong>
                 </span>
 
-                {goal.remindersEnabled ? (
+                {!isAuthenticated ? (
+                    <button
+                        onClick={() => dispatch(openAuthModal('signup'))}
+                        className="flex items-center gap-1 text-amber-600 hover:text-amber-700 font-medium cursor-pointer underline underline-offset-2"
+                        title="Sign up / Log in to enable automated email alerts"
+                    >
+                        <Bell className="w-3.5 h-3.5" /> Reminders: Sign up required
+                    </button>
+                ) : goal.remindersEnabled ? (
                     <span className="flex items-center gap-1 text-emerald-600 font-medium" title="Email reminder enabled">
                         <Bell className="w-3.5 h-3.5" /> Reminders On
                     </span>

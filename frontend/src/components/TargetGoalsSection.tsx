@@ -6,7 +6,8 @@ import { fetchTargetGoals } from '../slices/targetGoalSlice';
 import { openAuthModal } from '../slices/authSlice';
 import TargetGoalCard from './TargetGoalCard';
 import AddTargetGoalForm from './AddTargetGoalForm';
-import { Target, Plus, CheckCircle2, Clock, AlertTriangle, Sparkles, Bell } from 'lucide-react';
+import { Target, Plus, CheckCircle2, Clock, AlertTriangle, Sparkles, Bell, Mail } from 'lucide-react';
+import axiosClient from '../utils/axiosClient';
 
 type FilterType = 'all' | 'active' | 'dueSoon' | 'completed';
 
@@ -17,6 +18,28 @@ export default function TargetGoalsSection() {
 
     const [filter, setFilter] = useState<FilterType>('all');
     const [isFormOpen, setIsFormOpen] = useState(false);
+    const [testingEmail, setTestingEmail] = useState(false);
+    const [emailStatus, setEmailStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+    const handleSendTestEmail = async () => {
+        setTestingEmail(true);
+        setEmailStatus(null);
+        try {
+            const res = await axiosClient.post('/target-goal/test-email');
+            setEmailStatus({
+                type: 'success',
+                message: res.data.message || 'Test reminder email sent! Check your inbox / spam.'
+            });
+        } catch (err: any) {
+            const errDetail = err.response?.data?.details?.message || err.response?.data?.details || err.response?.data?.message || err.message;
+            setEmailStatus({
+                type: 'error',
+                message: `Failed to send email: ${typeof errDetail === 'object' ? JSON.stringify(errDetail) : errDetail}`
+            });
+        } finally {
+            setTestingEmail(false);
+        }
+    };
 
     useEffect(() => {
         dispatch(fetchTargetGoals());
@@ -81,15 +104,48 @@ export default function TargetGoalsSection() {
                         </div>
                     </div>
 
-                    <button
-                        onClick={() => setIsFormOpen(!isFormOpen)}
-                        className="flex items-center gap-1.5 px-4 py-2.5 bg-white text-blue-700 hover:bg-blue-50 font-semibold rounded-xl text-sm transition-all shadow-sm cursor-pointer"
-                    >
-                        <Plus className="w-4 h-4" />
-                        {isFormOpen ? 'Close Form' : 'New Target Goal'}
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        {isAuthenticated && (
+                            <button
+                                onClick={handleSendTestEmail}
+                                disabled={testingEmail}
+                                className="flex items-center gap-1.5 px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-semibold backdrop-blur transition-all cursor-pointer disabled:opacity-50"
+                                title="Send a test email to your registered email address"
+                            >
+                                <Mail className="w-3.5 h-3.5" />
+                                {testingEmail ? 'Sending...' : 'Send Test Reminder'}
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setIsFormOpen(!isFormOpen)}
+                            className="flex items-center gap-1.5 px-4 py-2.5 bg-white text-blue-700 hover:bg-blue-50 font-semibold rounded-xl text-sm transition-all shadow-sm cursor-pointer"
+                        >
+                            <Plus className="w-4 h-4" />
+                            {isFormOpen ? 'Close Form' : 'New Target Goal'}
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            {/* Email Test Status Banner */}
+            {emailStatus && (
+                <div className={`p-4 rounded-xl text-sm flex items-center justify-between gap-3 ${
+                    emailStatus.type === 'success'
+                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                        : 'bg-red-50 border border-red-200 text-red-800'
+                }`}>
+                    <div className="flex items-center gap-2">
+                        <span className="text-base">{emailStatus.type === 'success' ? '✅' : '⚠️'}</span>
+                        <span className="font-medium">{emailStatus.message}</span>
+                    </div>
+                    <button
+                        onClick={() => setEmailStatus(null)}
+                        className="text-gray-400 hover:text-gray-700 font-bold px-1.5 cursor-pointer"
+                    >
+                        ✕
+                    </button>
+                </div>
+            )}
 
             {/* Guest Reminder Banner */}
             {!isAuthenticated && (
